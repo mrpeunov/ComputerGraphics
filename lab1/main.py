@@ -13,12 +13,13 @@
 """
 
 from tkinter import *
+
+from Tools.scripts.make_ctype import method
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import numpy as np
 import matplotlib.pyplot as plt
 import random
-
 
 title = "1 лаба. 6 задание"
 resolution = (1000, 600)
@@ -26,10 +27,19 @@ workspace = 0.75
 
 
 class App(Tk):
-    def __init__(self, parent=None):
-        Tk.__init__(self, parent)
-        self.parent = parent
-        self._init_window()
+    count: int  # количество точек
+    field: Canvas  # место отображения действий
+    settings: Frame  # найстройки
+
+    def __init__(self):
+        Tk.__init__(self)
+
+        self._init_window()  # инициализация основного окна
+
+        # установим дефолтные значения
+        self.count = 4
+
+        # создадим фигуру
         self.create_figure()
 
     def _init_window(self):
@@ -46,74 +56,127 @@ class App(Tk):
         self._init_field()
         self._init_settings()
 
-
-        """
-        # Создание кнопки
-        button = tk.Button(self, text="Выйти", command=self.on_click)
-        button.grid(row=1, column=0)
-
-        # Создание двигалки
-        self.mu = tk.DoubleVar()
-        self.mu.set(5.0)
-        slider_mu = tk.Scale(self,
-                             from_=7, to=0, resolution=0.1,
-                             label='mu', variable=self.mu,
-                             command=self.on_change
-                             )
-        slider_mu.grid(row=0, column=0)
-
-        # Создание втрой двигалки
-        self.n = tk.IntVar()
-        self.n.set(512)  # default value for parameter "n"
-        slider_n = tk.Scale(self,
-                            from_=512, to=2,
-                            label='n', variable=self.n, command=self.on_change
-                            )
-        slider_n.grid(row=0, column=1)
-        """
-
     def _init_field(self):
         """
         создаем основное поле для рисования на нём
         """
         self.field = Canvas(self, bg="white")
+
+        # установка окна для ресования
         self.field.place(relx=0, rely=0, relwidth=workspace, relheight=1)
 
     def _init_settings(self):
         """
-        создаем поле настроек
-
-        тут необходимо управлять:
-        тип фигуры (всегда 4 точки, рандомные) - обновляется кнопкой новая фигура
-        углом поворота
-        точки основнойо си
+        создаем поля настроек
         """
         self.settings = Frame(self)
-        self.settings.place(relx=workspace, rely=0, relwidth=1-workspace, relheight=1)
 
-        self.set_count_point = Frame(self.settings)
-        self.set_angle = Frame(self.settings)
-        self.set_axis = Frame(self.settings)
+        # установка местоположения окна настроек
+        self.settings.place(relx=workspace, rely=0, relwidth=1 - workspace, relheight=1)
 
-        label_count_point = Label(self.set_count_point, text="Количество точек")
-        label_count_point.grid(column=0, row=0)
+        # Две кнопки: обновить фигуру и повернуть
+        self._init_one_column()
 
-        scale_count_point = Scale(self.set_count_point, from_=4, to=10, orient=HORIZONTAL, command=self.change_point_count)
-        scale_count_point.grid(column=1, row=0)
+        # Две шкалы: количество точек от 4 до 10 и угол поворота от 0 до 360
+        self._init_double_column()
 
-        label_angle = Label(self.set_angle, text="Угол")
-        scale_angle = Scale(self.set_angle, from_=0, to=360, resolution=10, orient=HORIZONTAL, command=self.change_point_count)
+        # Поля для ввода точек оси
+        self._init_three_column()
 
-        label_angle.grid(column=0, row=0)
-        scale_angle.grid(column=1, row=0)
+    def _init_one_column(self):
+        one_column = Frame(self.settings)
 
-        self.set_count_point.grid(column=0, row=0)
-        self.set_angle.grid(column=0, row=1)
+        self.create_button_field(frame=one_column, text="Создать новую фигуру", row=0, command=self.create_new_figure)
+        self.create_button_field(frame=one_column, text="Повернуть фигуру", row=1, command=self.turn_figure)
 
+        one_column.grid(column=0, row=1, padx=10)
+
+    def _init_double_column(self):
+        double_column = Frame(self.settings)
+
+        self.create_scale_field(frame=double_column,
+                                text="Количество точек",
+                                row=0,
+                                start=4,
+                                finish=10,
+                                step=1,
+                                command=self.change_point_count)
+
+        self.create_scale_field(frame=double_column,
+                                text="Угол",
+                                row=1,
+                                start=10,
+                                finish=360,
+                                step=5,
+                                command=self.change_point_count)
+
+        double_column.grid(column=0, row=0, padx=10)
+
+    def _init_three_column(self):
+        three_column = Frame(self.settings)
+
+        for i in range(6):
+            self.create_point_field(frame=three_column,
+                                    row=i // 3,
+                                    column=i % 3,
+                                    default=i // 3)
+
+        three_column.grid(column=0, row=3, padx=10)
+
+    @staticmethod
+    def create_button_field(frame: Frame, text: str, row: int, command: method):
+        button = Button(frame, text=text, command=command)
+        button.grid(row=row, column=0, padx=5, pady=5)
+
+    @staticmethod
+    def create_scale_field(frame: Frame, text: str, row: int, start: int, finish: int, step: int, command: method):
+        """создаёт надпись и scale поле"""
+        print(type(command))
+        label = Label(frame,
+                      text=text)
+
+        scale = Scale(frame,
+                      from_=start,
+                      to=finish,
+                      resolution=step,
+                      orient=HORIZONTAL,
+                      command=command)
+
+        label.grid(column=0, row=row)
+        scale.grid(column=1, row=row)
+
+    @staticmethod
+    def create_point_field(frame: Frame, row: int, column: int, default: int):
+        entry = Entry(frame, width=10)
+        entry.insert(0, default)
+        entry.grid(row=row, column=column, padx=5, pady=5)
+
+    # далее обработки кнопок
 
     def change_point_count(self, count):
+        """произошло изменение количества точек"""
         self.count = count
-        print(count)
+        self.create_new_figure()
+
+    def update_figure(self):
+        """обновить текущую фигуру"""
+        # перерисовываем фигуру по точкам
+        print(self.count)
+        print("Доделать")
+
+    def turn_figure(self):
+        """повернуть текущую фигуру"""
+        # turn
+        print("Доделать")
+        self.update_figure()
+
+    def create_new_figure(self):
+        """создадим новую фигуру"""
+        # создаём фигуру
+        print("Доделать")
+        self.update_figure()
+
+    # дальше не разобранная хуета
 
     def create_figure(self):
         # часть мат плот либ
@@ -138,8 +201,6 @@ class App(Tk):
         y_points = np.sin(z_points) + 0.1 * np.random.randn(100)
         ax.scatter3D(x_points, y_points, z_points, c=z_points, cmap='hsv')
 
-
-
         # plt.show()
         self.graph = FigureCanvasTkAgg(fig, master=self)
         canvas = self.graph.get_tk_widget()
@@ -163,4 +224,3 @@ class App(Tk):
 if __name__ == "__main__":
     app = App()
     app.mainloop()
-
