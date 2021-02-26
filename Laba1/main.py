@@ -13,13 +13,12 @@
 """
 
 from tkinter import *
+from typing import List
 
 from Tools.scripts.make_ctype import method
-from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-import numpy as np
-import matplotlib.pyplot as plt
-import random
+from Laba1.figure import Figure
+
 
 title = "1 лаба. 6 задание"
 resolution = (1000, 600)
@@ -30,17 +29,17 @@ class App(Tk):
     count: int  # количество точек
     field: Canvas  # место отображения действий
     settings: Frame  # найстройки
+    axis: List[List[float]]  # данные основной оси
+    figure: Figure  # фигура
+    entries: List[List[Entry]]
+    angle: int  # угол
 
     def __init__(self):
         Tk.__init__(self)
-
         self._init_window()  # инициализация основного окна
-
-        # установим дефолтные значения
-        self.count = 4
-
-        # создадим фигуру
-        self.create_figure()
+        self.count = 4  # установим дефолтные значения
+        self.angle = 180
+        self.create_new_figure()  # создадим фигуру
 
     def _init_window(self):
         """
@@ -108,18 +107,26 @@ class App(Tk):
                                 start=10,
                                 finish=360,
                                 step=5,
-                                command=self.change_point_count)
+                                command=self.change_angle)
 
         double_column.grid(column=0, row=0, padx=10)
 
     def _init_three_column(self):
         three_column = Frame(self.settings)
 
+        self.entries = list()
+        item = list()
+
         for i in range(6):
-            self.create_point_field(frame=three_column,
-                                    row=i // 3,
-                                    column=i % 3,
-                                    default=i // 3)
+            item.append(self.create_point_field(frame=three_column,
+                                                row=i // 3,
+                                                column=i % 3,
+                                                default=i // 3))
+            if i == 2:
+                self.entries.append(item)
+                item = list()
+
+        self.entries.append(item)
 
         three_column.grid(column=0, row=3, padx=10)
 
@@ -131,9 +138,7 @@ class App(Tk):
     @staticmethod
     def create_scale_field(frame: Frame, text: str, row: int, start: int, finish: int, step: int, command: method):
         """создаёт надпись и scale поле"""
-        print(type(command))
-        label = Label(frame,
-                      text=text)
+        label = Label(frame, text=text)
 
         scale = Scale(frame,
                       from_=start,
@@ -146,10 +151,24 @@ class App(Tk):
         scale.grid(column=1, row=row)
 
     @staticmethod
-    def create_point_field(frame: Frame, row: int, column: int, default: int):
+    def create_point_field(frame: Frame, row: int, column: int, default: int) -> Entry:
         entry = Entry(frame, width=10)
         entry.insert(0, default)
         entry.grid(row=row, column=column, padx=5, pady=5)
+        return entry
+
+    def entries_to_axis(self):
+        self.axis = list()
+        column = list()
+
+        for i in range(6):
+            column.append(float(self.entries[i // 3][i % 3].get()))
+
+            if i == 2:
+                self.axis.append(column)
+                column = list()
+
+        self.axis.append(column)
 
     # далее обработки кнопок
 
@@ -158,67 +177,25 @@ class App(Tk):
         self.count = count
         self.create_new_figure()
 
-    def update_figure(self):
-        """обновить текущую фигуру"""
-        # перерисовываем фигуру по точкам
-        print(self.count)
-        print("Доделать")
+    def change_angle(self, angle):
+        self.angle = int(angle)
+
+    def draw_figure(self):
+        """рисуем фигуру"""
+        self.figure.draw_figure()
+        canvas = FigureCanvasTkAgg(self.figure.get_figure(), master=self).get_tk_widget()
+        canvas.grid(row=0, column=0)
 
     def turn_figure(self):
         """повернуть текущую фигуру"""
-        # turn
-        print("Доделать")
-        self.update_figure()
+        self.entries_to_axis()
+        self.figure.turn(self.angle, self.axis)
+        self.draw_figure()
 
     def create_new_figure(self):
         """создадим новую фигуру"""
-        # создаём фигуру
-        print("Доделать")
-        self.update_figure()
-
-    # дальше не разобранная хуета
-
-    def create_figure(self):
-        # часть мат плот либ
-        """
-        fig = Figure(figsize=(6, 4), dpi=96)
-        ax = fig.add_subplot(111)
-        x, y = self.data(self.n.get(), self.mu.get())
-        self.line1, = ax.plot(x, y)
-        self.graph = FigureCanvasTkAgg(fig, master=self)
-        canvas = self.graph.get_tk_widget()
-        canvas.grid(row=0, column=2)
-        """
-        fig = plt.figure()
-        ax = plt.axes(projection="3d")
-        z_line = np.linspace(0, 15, 1000)
-        x_line = np.cos(z_line)
-        print(x_line)
-        y_line = np.sin(z_line)
-        ax.plot3D(x_line, y_line, z_line, 'gray')
-        z_points = 15 * np.random.random(100)
-        x_points = np.cos(z_points) + 0.1 * np.random.randn(100)
-        y_points = np.sin(z_points) + 0.1 * np.random.randn(100)
-        ax.scatter3D(x_points, y_points, z_points, c=z_points, cmap='hsv')
-
-        # plt.show()
-        self.graph = FigureCanvasTkAgg(fig, master=self)
-        canvas = self.graph.get_tk_widget()
-        canvas.grid(row=0, column=2)
-
-    def on_click(self):
-        self.quit()
-
-    def on_change(self, value):
-        x, y = self.data(self.n.get(), self.mu.get())
-        self.line1.set_data(x, y)  # update data
-        self.graph.draw()
-
-    def data(self, n, mu):
-        lst_y = []
-        for i in range(n):
-            lst_y.append(mu * random.random())
-        return range(n), lst_y
+        self.figure = Figure(self.count)  # создаём фигуру
+        self.draw_figure()  # перерисовываем
 
 
 if __name__ == "__main__":
