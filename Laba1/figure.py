@@ -60,11 +60,23 @@ class Figure:
         x = axis[0]
         y = axis[1]
         z = axis[2]
-        rotation_matrix = [
-            [m.cos(angle) + m.pow(x, x)*(1 - m.cos(angle)), (1 - m.cos(angle))*x*y - z*m.sin(angle), x*z*(1-m.cos(angle)) + y*m.sin(angle)],
-            [(1-m.cos(angle))*x*y + m.sin(angle)*z, m.cos(angle) + m.pow(y, y)*(1 - m.cos(angle)), y*z*(1-m.cos(angle)) - x*m.sin(angle)],
-            [(1-m.cos(angle))*x*z - m.sin(angle)*y, (1 - m.cos(angle))*z*y - x*m.sin(angle), m.cos(angle) + m.pow(z, z)*(1 - m.cos(angle))]
-        ]
+
+        cos = m.cos(m.radians(angle))
+        sin = m.sin(m.radians(angle))
+
+        a11 = cos + m.pow(x, 2) * (1 - cos)
+        a12 = (1 - cos) * x * y - z * sin
+        a13 = x * z * (1 - cos) + y * sin
+        a21 = (1 - cos) * x * y + sin * z
+        a22 = cos + m.pow(y, 2) * (1 - cos)
+        a23 = y * z * (1 - cos) - x * sin
+        a31 = (1 - cos) * x * z - sin * y
+        a32 = (1 - cos) * z * y + x * sin
+        a33 = cos + m.pow(z, 2) * (1 - cos)
+
+        rotation_matrix = [[a11, a12, a13],
+                           [a21, a22, a23],
+                           [a31, a32, a33]]
 
         new_points = list()
 
@@ -75,9 +87,20 @@ class Figure:
 
     @staticmethod
     def get_vector(axis: List[List[float]]):
+        # найдем вектор
         vector = list()
         for i in range(3):
-            vector.append(axis[0][i] - axis[1][i])
+            vector.append(axis[1][i] - axis[0][i])
+
+        # найдём норму вектора
+        norm = 0
+        for item in vector:
+            norm += m.pow(m.fabs(item), 2)
+        norm = m.sqrt(norm)
+
+        # отнормируем
+        for i in range(len(vector)):
+            vector[i] = vector[i]/norm
         return vector
 
     @staticmethod

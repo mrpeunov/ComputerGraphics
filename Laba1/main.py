@@ -11,7 +11,7 @@
 Слева 80% окна - рабочая область, куда вставим matplotlib,
 Справа 20% управление
 """
-
+from asyncio import sleep
 from tkinter import *
 from typing import List
 
@@ -23,6 +23,7 @@ from Laba1.figure import Figure
 title = "1 лаба. 6 задание"
 resolution = (1000, 600)
 workspace = 0.75
+time = 20
 
 
 class App(Tk):
@@ -36,10 +37,13 @@ class App(Tk):
 
     def __init__(self):
         Tk.__init__(self)
+
+        # установим дефолтные значения
+        self.count = 4
+        self.angle = 90
+
         self._init_window()  # инициализация основного окна
-        self.count = 4  # установим дефолтные значения
-        self.angle = 180
-        self.create_new_figure()  # создадим фигуру
+        self.create_new_figure()  # создание фигуры
 
     def _init_window(self):
         """
@@ -94,20 +98,12 @@ class App(Tk):
         double_column = Frame(self.settings)
 
         self.create_scale_field(frame=double_column,
-                                text="Количество точек",
-                                row=0,
-                                start=4,
-                                finish=10,
-                                step=1,
-                                command=self.change_point_count)
-
-        self.create_scale_field(frame=double_column,
                                 text="Угол",
                                 row=1,
                                 start=10,
                                 finish=360,
                                 step=5,
-                                command=self.change_angle)
+                                com=self.change_angle)
 
         double_column.grid(column=0, row=0, padx=10)
 
@@ -135,8 +131,7 @@ class App(Tk):
         button = Button(frame, text=text, command=command)
         button.grid(row=row, column=0, padx=5, pady=5)
 
-    @staticmethod
-    def create_scale_field(frame: Frame, text: str, row: int, start: int, finish: int, step: int, command: method):
+    def create_scale_field(self, frame: Frame, text: str, row: int, start: int, finish: int, step: int, com: method):
         """создаёт надпись и scale поле"""
         label = Label(frame, text=text)
 
@@ -145,7 +140,9 @@ class App(Tk):
                       to=finish,
                       resolution=step,
                       orient=HORIZONTAL,
-                      command=command)
+                      command=com)
+
+        scale.set(self.angle)
 
         label.grid(column=0, row=row)
         scale.grid(column=1, row=row)
@@ -171,11 +168,6 @@ class App(Tk):
         self.axis.append(column)
 
     # далее обработки кнопок
-
-    def change_point_count(self, count):
-        """произошло изменение количества точек"""
-        self.count = count
-        self.create_new_figure()
 
     def change_angle(self, angle):
         self.angle = int(angle)
