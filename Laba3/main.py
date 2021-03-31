@@ -88,7 +88,7 @@ class App(Tk):
             self.entries.append(self.create_point_field(frame=three_column,
                                                         row=i // 3,
                                                         column=i % 3,
-                                                        default=i // 3))
+                                                        default=0))
 
         three_column.grid(column=0, row=3, padx=10)
 
