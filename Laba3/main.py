@@ -123,10 +123,12 @@ class App(Tk):
         canvas.grid(row=0, column=0)
 
     def turn_figure_x(self):
-        pass
+        self.surface.turn_x()
+        self.draw_figure()
 
     def turn_figure_y(self):
-        pass
+        self.surface.turn_y()
+        self.draw_figure()
 
     def create_figure(self):
         """создадим новую фигуру"""
